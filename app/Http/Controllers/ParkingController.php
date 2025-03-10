@@ -14,7 +14,8 @@ class ParkingController extends Controller
     }
 
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         $request->validate([
             'name' => 'required',
             'location' => 'required',
@@ -27,7 +28,22 @@ class ParkingController extends Controller
             'location' => $request->location,
             'total_spots' => $request->total_spots,
             'available_spots' => $request->available_spots,
-            
+
         ]);
+    }
+
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'location' => 'required|string'
+        ]);
+
+
+        $parkings = Parking::where('location', 'LIKE', "%{$request->location}%")
+            ->where('available_spots', '>', 0)
+            ->get();
+
+        return response()->json($parkings);
     }
 }
