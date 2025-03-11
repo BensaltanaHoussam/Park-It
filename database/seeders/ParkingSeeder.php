@@ -3,14 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Parking;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ParkingSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
         Parking::create([
@@ -25,6 +21,20 @@ class ParkingSeeder extends Seeder
             'location' => 'City Center',
             'total_spots' => 100,
             'available_spots' => 100,
+        ]);
+
+        Parking::create([
+            'name' => 'Parking C',
+            'location' => 'Shopping Mall',
+            'total_spots' => 75,
+            'available_spots' => 75,
+        ]);
+
+        Parking::create([
+            'name' => 'Parking D',
+            'location' => 'Train Station',
+            'total_spots' => 200,
+            'available_spots' => 200,
         ]);
     }
 }

@@ -9,13 +9,14 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // Register Method
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
+            'role' => 'string|in:admin,user'
         ]);
 
         if ($validator->fails()) {
@@ -26,10 +27,11 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role ?? 'user'
         ]);
         $token = $user->createToken("jhgfdsgifasygfqwet8f379r6749q2308w7y4ijdqi4twe7hyu80nqcw")->plainTextToken;
 
-        return response()->json(['message' => 'User created successfully','token'=>$token], 201);
+        return response()->json(['message' => 'User created successfully', 'token' => $token], 201);
     }
 
     // Login Method
@@ -50,13 +52,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Create token for authenticated user
         $token = $user->createToken('MyApp')->plainTextToken;
 
         return response()->json(['token' => $token], 200);
     }
-
-    // Get User Data Method (for authenticated users)
     public function user(Request $request)
     {
         return response()->json($request->user());

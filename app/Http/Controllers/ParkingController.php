@@ -13,23 +13,42 @@ class ParkingController extends Controller
         return Parking::all();
     }
 
-
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'location' => 'required',
-            'total_spots' => 'required',
-            'available_spots' => 'required',
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'total_spots' => 'required|integer|min:1',
+            'available_spots' => 'required|integer|min:0|lte:total_spots',
         ]);
 
-        return Parking::create([
-            'name' => $request->name,
-            'location' => $request->location,
-            'total_spots' => $request->total_spots,
-            'available_spots' => $request->available_spots,
+        $parking = Parking::create($validatedData);
+        return response()->json(['message' => 'Parking created successfully', 'parking' => $parking], 201);
+    }
 
+
+    public function update(Request $request, Parking $parking)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'total_spots' => 'required|integer|min:1',
+            'available_spots' => 'required|integer|min:0|lte:total_spots',
         ]);
+
+        $parking->update($validatedData);
+        return response()->json(['message' => 'Parking updated successfully', 'parking' => $parking]);
+    }
+
+
+    public function destroy(Parking $parking)
+    {
+        if ($parking->reservations()->where('departure_time', '>=', now())->exists()) {
+            return response()->json(['message' => 'Cannot delete parking with active reservations'], 400);
+        }
+
+        $parking->delete();
+        return response()->json(['message' => 'Parking deleted successfully']);
     }
 
 
