@@ -25,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
     Route::post('/check-availability', [ReservationController::class, 'isAvailable']); 
 
-
     // Admin only routes
     Route::middleware('admin')->group(function () {
         Route::post('/parkings', [ParkingController::class, 'store']);
