@@ -20,7 +20,6 @@ class ParkingController extends Controller
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'total_spots' => 'required|integer|min:1',
-            'available_spots' => 'required|integer|min:0|lte:total_spots',
         ]);
 
         $parking = Parking::create($validatedData);

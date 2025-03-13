@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store']);
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
+    Route::post('/check-availability', [ReservationController::class, 'isAvailable']); 
 
 
     // Admin only routes
@@ -30,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/parkings', [ParkingController::class, 'store']);
         Route::put('/parkings/{parking}', [ParkingController::class, 'update']);
         Route::delete('/parkings/{parking}', [ParkingController::class, 'destroy']);
+        Route::get('/admin/statistics', [App\Http\Controllers\Admin\StatisticsController::class, 'index']); 
     });
 
 

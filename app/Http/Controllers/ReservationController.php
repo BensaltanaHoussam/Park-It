@@ -4,87 +4,82 @@ namespace App\Http\Controllers;
 
 use App\Models\Parking;
 use App\Models\Reservation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
 {
-
-
-    public function index(Request $request)
-    {
-        $reservations = Reservation::with('parking')
-            ->where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'current_reservations' => $reservations->where('departure_time', '>=', now()),
-            'past_reservations' => $reservations->where('departure_time', '<', now())
-        ]);
-    }
-
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required',
-            'parking_id' => 'required',
-            'arrival_time' => 'required',
-            'departure_time' => 'required',
+            'parking_id' => 'required|exists:parkings,id',
+            'arrival_time' => 'required|date|after:now',
+            'departure_time' => 'required|date|after:arrival_time',
         ]);
 
-        $parking = Parking::find($request->parking_id);
+        $parking = Parking::findOrFail($request->parking_id);
+        $arrivalTime = Carbon::parse($request->arrival_time);
+        $departureTime = Carbon::parse($request->departure_time);
 
-        if ($parking->available_spots > 0) {
-            $reservation = Reservation::create([
-                'user_id' => $request->user_id,
-                'parking_id' => $request->parking_id,
-                'arrival_time' => $request->arrival_time,
-                'departure_time' => $request->departure_time,
-            ]);
+        $conflictingReservations = Reservation::where('parking_id', $request->parking_id)
+            ->where(function ($query) use ($arrivalTime, $departureTime) {
+                $query->whereBetween('arrival_time', [$arrivalTime, $departureTime])
+                    ->orWhereBetween('departure_time', [$arrivalTime, $departureTime])
+                    ->orWhere(function ($q) use ($arrivalTime, $departureTime) {
+                        $q->where('arrival_time', '<=', $arrivalTime)
+                            ->where('departure_time', '>=', $departureTime);
+                    });
+            })
+            ->count();
 
-            $parking->decrement('available_spots');
-            return response()->json(['message' => 'Reservation created successfully', 'reservation' => $reservation], 201);
+        if ($conflictingReservations > 0) {
+            return response()->json([
+                'message' => 'Parking is not available for the selected time slot'
+            ], 400);
         }
 
-        return response()->json(['message' => 'No available spots'], 400);
-
-
-    }
-
-    public function update(Request $request, Reservation $reservation)
-    {
-        $request->validate([
-            'arrival_time' => 'required',
-            'departure_time' => 'required',
-        ]);
-
-        if ($reservation->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $reservation->update([
-            'arrival_time' => $request->arrival_time,
-            'departure_time' => $request->departure_time,
+        $reservation = Reservation::create([
+            'user_id' => auth()->id(),
+            'parking_id' => $request->parking_id,
+            'arrival_time' => $arrivalTime,
+            'departure_time' => $departureTime,
         ]);
 
         return response()->json([
-            'message' => 'Reservation updated successfully',
+            'message' => 'Reservation created successfully',
             'reservation' => $reservation
-        ]);
+        ], 201);
     }
 
-    public function destroy(Reservation $reservation)
+    public function isAvailable(Request $request)
     {
+        $request->validate([
+            'parking_id' => 'required|exists:parkings,id',
+            'arrival_time' => 'required|date',
+            'departure_time' => 'required|date|after:arrival_time',
+        ]);
 
-        if ($reservation->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $arrivalTime = Carbon::parse($request->arrival_time);
+        $departureTime = Carbon::parse($request->departure_time);
 
-        $parking = Parking::find($reservation->parking_id);
-        $parking->increment('available_spots');
+        $isAvailable = Reservation::where('parking_id', $request->parking_id)
+            ->where(function ($query) use ($arrivalTime, $departureTime) {
+                $query->whereBetween('arrival_time', [$arrivalTime, $departureTime])
+                    ->orWhereBetween('departure_time', [$arrivalTime, $departureTime])
+                    ->orWhere(function ($q) use ($arrivalTime, $departureTime) {
+                        $q->where('arrival_time', '<=', $arrivalTime)
+                            ->where('departure_time', '>=', $departureTime);
+                    });
+            })
+            ->doesntExist();
 
-        $reservation->delete();
 
-        return response()->json(['message' => 'Reservation cancelled successfully']);
+        return response()->json([
+            'is_available' => $isAvailable,
+            'time_slot' => [
+                'arrival' => $arrivalTime->format('Y-m-d H:i:s'),
+                'departure' => $departureTime->format('Y-m-d H:i:s')
+            ]
+        ]);
     }
 }

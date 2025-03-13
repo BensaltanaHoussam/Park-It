@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('location');
             $table->integer('total_spots');
-            $table->integer('available_spots')->default(0);
             $table->timestamps();
         });
     }
