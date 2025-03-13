@@ -13,16 +13,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user', [AuthController::class, 'user']);
-    
+
     // Parking routes - view only
     Route::get('/parkings', [ParkingController::class, 'index']);
     Route::get('/search-parking', [ParkingController::class, 'search']);
-    
+
     // Reservation routes
     Route::get('/reservations', [ReservationController::class, 'index']);
     Route::post('/reservations', [ReservationController::class, 'store']);
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
+
 
     // Admin only routes
     Route::middleware('admin')->group(function () {
@@ -30,4 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/parkings/{parking}', [ParkingController::class, 'update']);
         Route::delete('/parkings/{parking}', [ParkingController::class, 'destroy']);
     });
+
+
 });
+

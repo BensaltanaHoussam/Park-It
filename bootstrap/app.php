@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+      // Add Sanctum middleware
+      $middleware->append(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+        
+      // Register middleware aliases
+      $middleware->alias([
+          'admin' => \App\Http\Middleware\AdminMiddleware::class,
+          'auth' => Authenticate::class,
+          'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+          'guest' => RedirectIfAuthenticated::class,
+      ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
