@@ -47,7 +47,7 @@ class ReservationController extends Controller
             ], 400);
         }
 
-        // Create reservation and decrement total spots
+       
         $reservation = DB::transaction(function () use ($parking, $request, $arrivalTime, $departureTime) {
             $reservation = Reservation::create([
                 'user_id' => auth()->id(),
